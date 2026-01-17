@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ThreatSphere - Security Threat Modeling</title>
+    <title>LegislaSphere - Legislative Risk Analysis</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -90,6 +90,7 @@
                         'box': '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
                         'shield-alert': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
                         'download': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+                        'upload': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
                         'trash-2': '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
                         'chevron-right': '<path d="m9 18 6-6-6-6"/>',
                         'mouse-pointer-2': '<path d="m4 4 7.07 17 2.51-7.39L21 11.07z"/>',
@@ -98,7 +99,8 @@
                         'dollar-sign': '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
                         'file-text': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
                         'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
-                        'lightbulb': '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>'
+                        'lightbulb': '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>',
+                        'scale': '<path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/>'
                     };
                     
                     svg.innerHTML = iconPaths[name] || '';
@@ -112,36 +114,36 @@
         function App() {
             // --- State ---
             const [data, setData] = useState({
-                projectName: "New Security Project",
+                projectName: "New Legislative Analysis",
                 subProjects: [
                     {
                         id: "sp-1",
-                        name: "Authentication Service",
+                        name: "Employment Law",
                         threats: [
                             { 
                                 id: "t-1", 
-                                title: "Brute Force", 
+                                title: "Minimum Wage Increase", 
                                 severity: "High", 
                                 status: "Open", 
-                                category: "Authentication",
-                                context: "Login Endpoint",
-                                risk: "Unauthorized Access",
-                                cost: "Low",
-                                sources: ["https://owasp.org/www-community/attacks/Brute_force_attack"],
-                                description: "Attackers might try to guess passwords repeatedly.",
-                                reasoning: "Rate limiting is the industry standard defense.",
-                                solution: "Implement leaky bucket algorithm for rate limiting and account lockout after 5 failed attempts."
+                                category: "Labor Regulation",
+                                context: "Federal Legislature",
+                                risk: "Increased operational costs",
+                                cost: "High",
+                                sources: ["https://www.congress.gov/"],
+                                description: "Proposed legislation to raise the federal minimum wage could significantly impact labor costs.",
+                                reasoning: "Phased implementation allows for gradual adjustment.",
+                                solution: "Develop workforce optimization strategy and review compensation structures in advance of potential passage."
                             }
                         ]
                     },
                     {
                         id: "sp-2",
-                        name: "Database Cluster",
+                        name: "Environmental Compliance",
                         threats: []
                     },
                     {
                         id: "sp-3",
-                        name: "Frontend UI",
+                        name: "Data Privacy",
                         threats: []
                     }
                 ]
@@ -160,7 +162,7 @@
                     ...prev,
                     subProjects: [
                         ...prev.subProjects,
-                        { id: newId, name: "New Sub-Project", threats: [] }
+                        { id: newId, name: "New Legislative Area", threats: [] }
                     ]
                 }));
                 setSelection({ type: 'subProject', id: newId });
@@ -191,7 +193,7 @@
                                 ...sp,
                                 threats: [...sp.threats, {
                                     id: newThreatId,
-                                    title: "New Threat",
+                                    title: "New Legislative Risk",
                                     severity: "Medium",
                                     status: "Open",
                                     category: "",
@@ -274,10 +276,32 @@
                 const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
                 const downloadAnchorNode = document.createElement('a');
                 downloadAnchorNode.setAttribute("href", dataStr);
-                downloadAnchorNode.setAttribute("download", "threatsphere_model.json");
+                downloadAnchorNode.setAttribute("download", "legislasphere_model.json");
                 document.body.appendChild(downloadAnchorNode);
                 downloadAnchorNode.click();
                 downloadAnchorNode.remove();
+            };
+
+            const importJSON = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (imported.projectName && imported.subProjects) {
+                            setData(imported);
+                            setSelection({ type: 'project', id: 'root' });
+                        } else {
+                            alert("Invalid file format. Please ensure the JSON has 'projectName' and 'subProjects' fields.");
+                        }
+                    } catch (err) {
+                        alert("Failed to parse JSON file: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = ''; // Reset input
             };
 
             // --- Render Helpers ---
@@ -336,9 +360,9 @@
                         <div className="absolute top-4 left-4 z-20">
                             <h1 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
                                 <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-                                    <Icon name="shield-alert" size={20} />
+                                    <Icon name="scale" size={20} />
                                 </div>
-                                ThreatSphere
+                                LegislaSphere
                             </h1>
                         </div>
 
@@ -347,10 +371,10 @@
                                 onClick={addSubProject}
                                 className="bg-white hover:bg-slate-50 text-indigo-600 border border-indigo-200 px-4 py-2 rounded-full shadow-sm flex items-center gap-2 transition text-sm font-medium"
                             >
-                                <Icon name="plus" size={16} /> Add Project Module
+                                <Icon name="plus" size={16} /> Add Legislative Area
                             </button>
                             <div className="text-xs text-slate-400 font-medium px-2">
-                                {data.subProjects.length} Modules • {data.subProjects.reduce((acc, sp) => acc + sp.threats.length, 0)} Threats
+                                {data.subProjects.length} Areas • {data.subProjects.reduce((acc, sp) => acc + sp.threats.length, 0)} Risks
                             </div>
                         </div>
                         
@@ -496,9 +520,9 @@
                         {/* Header */}
                         <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
                             <h2 className="font-bold text-slate-700 text-lg flex items-center gap-2">
-                                {selection.type === 'project' && <><Icon name="layout-dashboard" /> Project Overview</>}
-                                {selection.type === 'subProject' && <><Icon name="box" /> Sub-Project</>}
-                                {selection.type === 'threat' && <><Icon name="shield-alert" /> Threat Analysis</>}
+                                {selection.type === 'project' && <><Icon name="layout-dashboard" /> Analysis Overview</>}
+                                {selection.type === 'subProject' && <><Icon name="box" /> Legislative Area</>}
+                                {selection.type === 'threat' && <><Icon name="scale" /> Risk Analysis</>}
                             </h2>
                             {selection.type === 'threat' && (
                                 <button 
@@ -517,7 +541,7 @@
                             {selection.type === 'project' && (
                                 <div className="space-y-6 animate-fade-in">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Project Name</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Analysis Name</label>
                                         <input 
                                             type="text" 
                                             value={data.projectName}
@@ -527,7 +551,7 @@
                                     </div>
 
                                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                        <h3 className="text-sm font-semibold text-slate-700 mb-3">Threat Summary</h3>
+                                        <h3 className="text-sm font-semibold text-slate-700 mb-3">Risk Summary</h3>
                                         <div className="grid grid-cols-2 gap-3">
                                             {['Critical', 'High', 'Medium', 'Low'].map(sev => {
                                                 const count = data.subProjects.reduce((acc, sp) => 
@@ -542,12 +566,23 @@
                                         </div>
                                     </div>
 
-                                    <button 
-                                        onClick={exportJSON}
-                                        className="w-full py-2.5 bg-slate-800 text-white rounded hover:bg-slate-900 flex items-center justify-center gap-2 transition"
-                                    >
-                                        <Icon name="download" size={16} /> Export Model JSON
-                                    </button>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={exportJSON}
+                                            className="flex-1 py-2.5 bg-slate-800 text-white rounded hover:bg-slate-900 flex items-center justify-center gap-2 transition"
+                                        >
+                                            <Icon name="download" size={16} /> Export JSON
+                                        </button>
+                                        <label className="flex-1 py-2.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center justify-center gap-2 transition cursor-pointer">
+                                            <Icon name="upload" size={16} /> Import JSON
+                                            <input 
+                                                type="file" 
+                                                accept=".json"
+                                                onChange={importJSON}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                    </div>
                                 </div>
                             )}
 
@@ -555,7 +590,7 @@
                             {selection.type === 'subProject' && activeSubProject && (
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Module Name</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Legislative Area Name</label>
                                         <div className="flex gap-2">
                                             <input 
                                                 type="text" 
@@ -566,7 +601,7 @@
                                             <button 
                                                 onClick={() => deleteSubProject(activeSubProject.id)}
                                                 className="p-2 text-rose-500 hover:bg-rose-50 rounded border border-transparent hover:border-rose-200"
-                                                title="Delete Sub-Project"
+                                                title="Delete Legislative Area"
                                             >
                                                 <Icon name="trash-2" size={18} />
                                             </button>
@@ -575,19 +610,19 @@
 
                                     <div className="border-t border-slate-200 pt-4">
                                         <div className="flex justify-between items-center mb-4">
-                                            <h3 className="font-bold text-slate-700">Threats ({activeSubProject.threats.length})</h3>
+                                            <h3 className="font-bold text-slate-700">Legislative Risks ({activeSubProject.threats.length})</h3>
                                             <button 
                                                 onClick={() => addThreat(activeSubProject.id)}
                                                 className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-100 font-bold flex items-center gap-1"
                                             >
-                                                <Icon name="plus" size={12} /> Add Threat
+                                                <Icon name="plus" size={12} /> Add Risk
                                             </button>
                                         </div>
                                         
                                         <div className="space-y-2">
                                             {activeSubProject.threats.length === 0 && (
                                                 <div className="text-center py-8 text-slate-400 bg-slate-50 rounded border border-dashed border-slate-300 text-sm">
-                                                    No threats identified yet.
+                                                    No legislative risks identified yet.
                                                 </div>
                                             )}
                                             {activeSubProject.threats.map(threat => (
@@ -617,7 +652,7 @@
                                     
                                     {/* Basics */}
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Threat Title</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Risk Title</label>
                                         <input 
                                             type="text" 
                                             value={activeThreat.title}
@@ -629,7 +664,7 @@
                                     {/* Classification */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Severity</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Impact Level</label>
                                             <select 
                                                 value={activeThreat.severity}
                                                 onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { severity: e.target.value })}
@@ -643,7 +678,7 @@
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cost</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Compliance Cost</label>
                                             <div className="relative">
                                                 <span className="absolute left-2.5 top-2.5 text-slate-400"><Icon name="dollar-sign" size={14} /></span>
                                                 <input 
@@ -651,7 +686,7 @@
                                                     value={activeThreat.cost || ''}
                                                     onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { cost: e.target.value })}
                                                     className="w-full pl-8 p-2 border border-slate-300 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                                    placeholder="e.g. High, $5k"
+                                                    placeholder="e.g. High, $50k/year"
                                                 />
                                             </div>
                                         </div>
@@ -665,17 +700,17 @@
                                                 value={activeThreat.category || ''}
                                                 onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { category: e.target.value })}
                                                 className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                                placeholder="e.g. Injection"
+                                                placeholder="e.g. Tax Reform"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Context</label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Jurisdiction</label>
                                             <input 
                                                 type="text" 
                                                 value={activeThreat.context || ''}
                                                 onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { context: e.target.value })}
                                                 className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                                placeholder="e.g. Public API"
+                                                placeholder="e.g. Federal, State, EU"
                                             />
                                         </div>
                                     </div>
@@ -684,50 +719,50 @@
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                                                <Icon name="alert-triangle" size={12} /> Risk
+                                                <Icon name="alert-triangle" size={12} /> Business Impact
                                             </label>
                                             <textarea 
                                                 value={activeThreat.risk || ''}
                                                 onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { risk: e.target.value })}
                                                 rows="2"
                                                 className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
-                                                placeholder="What is the potential impact?"
+                                                placeholder="What is the potential impact on operations?"
                                             ></textarea>
                                         </div>
 
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                                                <Icon name="file-text" size={12} /> Description of the Issue
+                                                <Icon name="file-text" size={12} /> Legislative Description
                                             </label>
                                             <textarea 
                                                 value={activeThreat.description}
                                                 onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { description: e.target.value })}
                                                 rows="3"
                                                 className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
-                                                placeholder="Detailed explanation of the vulnerability..."
+                                                placeholder="Summary of the proposed legislation or regulatory change..."
                                             ></textarea>
                                         </div>
 
                                         <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
                                             <label className="block text-xs font-bold text-indigo-800 uppercase mb-1 flex items-center gap-1">
-                                                <Icon name="lightbulb" size={12} /> Reasoning for Solution
+                                                <Icon name="lightbulb" size={12} /> Strategic Reasoning
                                             </label>
                                             <textarea 
                                                 value={activeThreat.reasoning || ''}
                                                 onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { reasoning: e.target.value })}
                                                 rows="2"
                                                 className="w-full p-2 border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none bg-white"
-                                                placeholder="Why is this the best approach?"
+                                                placeholder="Why is this the recommended approach?"
                                             ></textarea>
 
                                             <div className="mt-3">
-                                                <label className="block text-xs font-bold text-indigo-800 uppercase mb-1">Solution & Implementation</label>
+                                                <label className="block text-xs font-bold text-indigo-800 uppercase mb-1">Compliance Strategy</label>
                                                 <textarea 
                                                     value={activeThreat.solution}
                                                     onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { solution: e.target.value })}
                                                     rows="4"
                                                     className="w-full p-2 border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none bg-white"
-                                                    placeholder="Step-by-step mitigation plan..."
+                                                    placeholder="Action plan for compliance or mitigation..."
                                                 ></textarea>
                                             </div>
                                         </div>
@@ -781,7 +816,7 @@
                                             onClick={() => deleteThreat(selection.parentId, activeThreat.id)}
                                             className="w-full py-2 text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition text-sm flex items-center justify-center gap-2 font-medium"
                                         >
-                                            <Icon name="trash-2" size={14} /> Delete Threat
+                                            <Icon name="trash-2" size={14} /> Delete Risk
                                         </button>
                                     </div>
                                 </div>

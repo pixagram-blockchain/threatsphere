@@ -3,44 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ThreatSphere</title>
-    
+    <title>ThreatSphere - Security Threat Modeling</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <style>
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body, #root { width: 100%; height: 100%; overflow: hidden; }
         .canvas-bg {
             background-color: #f8fafc;
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
             background-size: 20px 20px;
         }
-        
-        .node-transition { 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        
+        .node-transition { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .node-hover:hover { 
             filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15)); 
             transform: scale(1.05); 
             cursor: pointer; 
             z-index: 50;
         }
-        
-        /* Custom scrollbar */
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
         .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         
-        /* Animation utilities */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -54,736 +42,765 @@
         .animate-fade-in-right { animation: fadeInRight 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden text-slate-800 bg-white">
+<body>
+    <div id="root"></div>
 
-<div id="root"></div>
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useRef } = React;
 
-<script type="text/babel">
-
-    const { useState, useEffect, useMemo, useRef } = React;
-
-    // --- Components ---
-
-    // Icon Helper Component (Adapted for browser global Lucide)
-    const Icon = ({ name, size = 16, className = "" }) => {
-        const iconRef = useRef(null);
-        
-        useEffect(() => {
-            if (window.lucide) {
-                window.lucide.createIcons({
-                    root: iconRef.current ? iconRef.current.parentNode : document,
-                    nameAttr: 'data-lucide',
-                    attrs: {
-                        class: `lucide lucide-${name} ${className}`,
-                        width: size,
-                        height: size,
-                        strokeWidth: 2
-                    }
-                });
-            }
-        }, [name, className, size]);
-
-        return <i ref={iconRef} data-lucide={name} className={className}></i>;
-    };
-
-    // Main Application
-    function App() {
-        // --- State ---
-        const [data, setData] = useState({
-            projectName: "New Security Project",
-            subProjects: [
-                {
-                    id: "sp-1",
-                    name: "Authentication Service",
-                    threats: [
-                        { 
-                            id: "t-1", 
-                            title: "Brute Force", 
-                            severity: "High", 
-                            status: "Open", 
-                            category: "Authentication",
-                            context: "Login Endpoint",
-                            risk: "Unauthorized Access",
-                            cost: "Low",
-                            sources: ["https://owasp.org/www-community/attacks/Brute_force_attack"],
-                            description: "Attackers might try to guess passwords repeatedly.",
-                            reasoning: "Rate limiting is the industry standard defense.",
-                            solution: "Implement leaky bucket algorithm for rate limiting and account lockout after 5 failed attempts."
-                        }
-                    ]
-                },
-                {
-                    id: "sp-2",
-                    name: "Database Cluster",
-                    threats: []
-                },
-                {
-                    id: "sp-3",
-                    name: "Frontend UI",
-                    threats: []
-                }
-            ]
-        });
-
-        const [selection, setSelection] = useState({ type: 'project', id: 'root' });
-        const [newLinkInput, setNewLinkInput] = useState("");
-
-        // --- Actions ---
-
-        const updateProjectName = (name) => setData(prev => ({ ...prev, projectName: name }));
-
-        const addSubProject = () => {
-            const newId = `sp-${Date.now()}`;
-            setData(prev => ({
-                ...prev,
-                subProjects: [
-                    ...prev.subProjects,
-                    { id: newId, name: "New Sub-Project", threats: [] }
-                ]
-            }));
-            setSelection({ type: 'subProject', id: newId });
-        };
-
-        const updateSubProject = (id, fields) => {
-            setData(prev => ({
-                ...prev,
-                subProjects: prev.subProjects.map(sp => sp.id === id ? { ...sp, ...fields } : sp)
-            }));
-        };
-
-        const deleteSubProject = (id) => {
-            setData(prev => ({
-                ...prev,
-                subProjects: prev.subProjects.filter(sp => sp.id !== id)
-            }));
-            setSelection({ type: 'project', id: 'root' });
-        };
-
-        const addThreat = (subProjectId) => {
-            const newThreatId = `t-${Date.now()}`;
-            setData(prev => ({
-                ...prev,
-                subProjects: prev.subProjects.map(sp => {
-                    if (sp.id === subProjectId) {
-                        return {
-                            ...sp,
-                            threats: [...sp.threats, {
-                                id: newThreatId,
-                                title: "New Threat",
-                                severity: "Medium",
-                                status: "Open",
-                                category: "",
-                                context: "",
-                                risk: "",
-                                cost: "",
-                                sources: [],
-                                description: "",
-                                reasoning: "",
-                                solution: ""
-                            }]
-                        };
-                    }
-                    return sp;
-                })
-            }));
-            setSelection({ type: 'threat', id: newThreatId, parentId: subProjectId });
-        };
-
-        const updateThreat = (subProjectId, threatId, fields) => {
-            setData(prev => ({
-                ...prev,
-                subProjects: prev.subProjects.map(sp => {
-                    if (sp.id === subProjectId) {
-                        return {
-                            ...sp,
-                            threats: sp.threats.map(t => t.id === threatId ? { ...t, ...fields } : t)
-                        };
-                    }
-                    return sp;
-                })
-            }));
-        };
-
-        const deleteThreat = (subProjectId, threatId) => {
-            setData(prev => ({
-                ...prev,
-                subProjects: prev.subProjects.map(sp => {
-                    if (sp.id === subProjectId) {
-                        return {
-                            ...sp,
-                            threats: sp.threats.filter(t => t.id !== threatId)
-                        };
-                    }
-                    return sp;
-                })
-            }));
-            setSelection({ type: 'subProject', id: subProjectId });
-        };
-
-        // Link Management
-        const addSource = (subProjectId, threatId) => {
-            if (!newLinkInput.trim()) return;
+        // Icon component using Lucide
+        const Icon = ({ name, size = 16, className = "" }) => {
+            const ref = useRef(null);
             
-            // Simple check to ensure we are editing the correct threat
-            const currentThreat = activeThreat; 
-            if (!currentThreat) return;
-
-            const newSources = [...(currentThreat.sources || []), newLinkInput];
-            updateThreat(subProjectId, threatId, { sources: newSources });
-            setNewLinkInput("");
+            useEffect(() => {
+                if (ref.current && window.lucide) {
+                    const iconName = name.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+                    const iconNames = {
+                        'plus': 'plus',
+                        'layoutDashboard': 'layout-dashboard',
+                        'box': 'box',
+                        'shieldAlert': 'shield-alert',
+                        'download': 'download',
+                        'trash2': 'trash-2',
+                        'chevronRight': 'chevron-right',
+                        'mousePointer2': 'mouse-pointer-2',
+                        'externalLink': 'external-link',
+                        'link': 'link',
+                        'dollarSign': 'dollar-sign',
+                        'fileText': 'file-text',
+                        'alertTriangle': 'alert-triangle',
+                        'lightbulb': 'lightbulb'
+                    };
+                    
+                    ref.current.innerHTML = '';
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.setAttribute('width', size);
+                    svg.setAttribute('height', size);
+                    svg.setAttribute('viewBox', '0 0 24 24');
+                    svg.setAttribute('fill', 'none');
+                    svg.setAttribute('stroke', 'currentColor');
+                    svg.setAttribute('stroke-width', '2');
+                    svg.setAttribute('stroke-linecap', 'round');
+                    svg.setAttribute('stroke-linejoin', 'round');
+                    if (className) svg.setAttribute('class', className);
+                    
+                    const iconPaths = {
+                        'plus': '<path d="M5 12h14"/><path d="M12 5v14"/>',
+                        'layout-dashboard': '<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+                        'box': '<path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>',
+                        'shield-alert': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/>',
+                        'download': '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
+                        'trash-2': '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/>',
+                        'chevron-right': '<path d="m9 18 6-6-6-6"/>',
+                        'mouse-pointer-2': '<path d="m4 4 7.07 17 2.51-7.39L21 11.07z"/>',
+                        'external-link': '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+                        'link': '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+                        'dollar-sign': '<line x1="12" x2="12" y1="2" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>',
+                        'file-text': '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/>',
+                        'alert-triangle': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+                        'lightbulb': '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/>'
+                    };
+                    
+                    svg.innerHTML = iconPaths[name] || '';
+                    ref.current.appendChild(svg);
+                }
+            }, [name, size, className]);
+            
+            return <span ref={ref} style={{ display: 'inline-flex', alignItems: 'center' }}></span>;
         };
 
-        const deleteSource = (subProjectId, threatId, index) => {
-            const currentThreat = activeThreat;
-            if (!currentThreat) return;
+        function App() {
+            // --- State ---
+            const [data, setData] = useState({
+                projectName: "New Security Project",
+                subProjects: [
+                    {
+                        id: "sp-1",
+                        name: "Authentication Service",
+                        threats: [
+                            { 
+                                id: "t-1", 
+                                title: "Brute Force", 
+                                severity: "High", 
+                                status: "Open", 
+                                category: "Authentication",
+                                context: "Login Endpoint",
+                                risk: "Unauthorized Access",
+                                cost: "Low",
+                                sources: ["https://owasp.org/www-community/attacks/Brute_force_attack"],
+                                description: "Attackers might try to guess passwords repeatedly.",
+                                reasoning: "Rate limiting is the industry standard defense.",
+                                solution: "Implement leaky bucket algorithm for rate limiting and account lockout after 5 failed attempts."
+                            }
+                        ]
+                    },
+                    {
+                        id: "sp-2",
+                        name: "Database Cluster",
+                        threats: []
+                    },
+                    {
+                        id: "sp-3",
+                        name: "Frontend UI",
+                        threats: []
+                    }
+                ]
+            });
 
-            const newSources = [...currentThreat.sources];
-            newSources.splice(index, 1);
-            updateThreat(subProjectId, threatId, { sources: newSources });
-        };
+            const [selection, setSelection] = useState({ type: 'project', id: 'root' });
+            const [newLinkInput, setNewLinkInput] = useState("");
 
-        const exportJSON = () => {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "threatsphere_model.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        };
+            // --- Actions ---
 
-        // --- Helpers ---
-        const activeSubProject = selection.type !== 'project' 
-            ? data.subProjects.find(sp => sp.id === (selection.type === 'subProject' ? selection.id : selection.parentId))
-            : null;
-        
-        const activeThreat = selection.type === 'threat' && activeSubProject
-            ? activeSubProject.threats.find(t => t.id === selection.id)
-            : null;
+            const updateProjectName = (name) => setData(prev => ({ ...prev, projectName: name }));
 
-        // --- Render Helpers ---
-        const center = { x: 400, y: 300 }; 
-        const radius = 200; 
+            const addSubProject = () => {
+                const newId = `sp-${Date.now()}`;
+                setData(prev => ({
+                    ...prev,
+                    subProjects: [
+                        ...prev.subProjects,
+                        { id: newId, name: "New Sub-Project", threats: [] }
+                    ]
+                }));
+                setSelection({ type: 'subProject', id: newId });
+            };
 
-        // Visualization Logic
-        const nodes = useMemo(() => {
-            const count = data.subProjects.length;
-            return data.subProjects.map((sp, index) => {
-                const angle = (index / count) * 2 * Math.PI - (Math.PI / 2);
-                const spX = center.x + radius * Math.cos(angle);
-                const spY = center.y + radius * Math.sin(angle);
+            const updateSubProject = (id, fields) => {
+                setData(prev => ({
+                    ...prev,
+                    subProjects: prev.subProjects.map(sp => sp.id === id ? { ...sp, ...fields } : sp)
+                }));
+            };
+
+            const deleteSubProject = (id) => {
+                setData(prev => ({
+                    ...prev,
+                    subProjects: prev.subProjects.filter(sp => sp.id !== id)
+                }));
+                setSelection({ type: 'project', id: 'root' });
+            };
+
+            const addThreat = (subProjectId) => {
+                const newThreatId = `t-${Date.now()}`;
+                setData(prev => ({
+                    ...prev,
+                    subProjects: prev.subProjects.map(sp => {
+                        if (sp.id === subProjectId) {
+                            return {
+                                ...sp,
+                                threats: [...sp.threats, {
+                                    id: newThreatId,
+                                    title: "New Threat",
+                                    severity: "Medium",
+                                    status: "Open",
+                                    category: "",
+                                    context: "",
+                                    risk: "",
+                                    cost: "",
+                                    sources: [],
+                                    description: "",
+                                    reasoning: "",
+                                    solution: ""
+                                }]
+                            };
+                        }
+                        return sp;
+                    })
+                }));
+                setSelection({ type: 'threat', id: newThreatId, parentId: subProjectId });
+            };
+
+            const updateThreat = (subProjectId, threatId, fields) => {
+                setData(prev => ({
+                    ...prev,
+                    subProjects: prev.subProjects.map(sp => {
+                        if (sp.id === subProjectId) {
+                            return {
+                                ...sp,
+                                threats: sp.threats.map(t => t.id === threatId ? { ...t, ...fields } : t)
+                            };
+                        }
+                        return sp;
+                    })
+                }));
+            };
+
+            const deleteThreat = (subProjectId, threatId) => {
+                setData(prev => ({
+                    ...prev,
+                    subProjects: prev.subProjects.map(sp => {
+                        if (sp.id === subProjectId) {
+                            return {
+                                ...sp,
+                                threats: sp.threats.filter(t => t.id !== threatId)
+                            };
+                        }
+                        return sp;
+                    })
+                }));
+                setSelection({ type: 'subProject', id: subProjectId });
+            };
+
+            // --- Helpers ---
+            const activeSubProject = selection.type !== 'project' 
+                ? data.subProjects.find(sp => sp.id === (selection.type === 'subProject' ? selection.id : selection.parentId))
+                : null;
+            
+            const activeThreat = selection.type === 'threat' && activeSubProject
+                ? activeSubProject.threats.find(t => t.id === selection.id)
+                : null;
+
+            // Link Management
+            const addSource = (subProjectId, threatId) => {
+                if (!newLinkInput.trim()) return;
                 
-                // Calculate threat positions
-                const threatOrbitRadius = 90;
-                const threatNodes = sp.threats.map((t, tIndex) => {
-                    const totalThreats = sp.threats.length;
-                    const spread = Math.PI; // 180 degree spread away from center
-                    const startAngle = angle - (spread / 2);
-                    const step = totalThreats > 1 ? spread / (totalThreats - 1) : 0;
-                    const tAngle = totalThreats === 1 ? angle : startAngle + (tIndex * step);
+                if (!activeThreat) return;
+
+                const newSources = [...(activeThreat.sources || []), newLinkInput];
+                updateThreat(subProjectId, threatId, { sources: newSources });
+                setNewLinkInput("");
+            };
+
+            const deleteSource = (subProjectId, threatId, index) => {
+                if (!activeThreat) return;
+
+                const newSources = [...activeThreat.sources];
+                newSources.splice(index, 1);
+                updateThreat(subProjectId, threatId, { sources: newSources });
+            };
+
+            const exportJSON = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", "threatsphere_model.json");
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            };
+
+            // --- Render Helpers ---
+            const center = { x: 400, y: 300 }; 
+            const radius = 200; 
+
+            // Visualization Logic
+            const nodes = useMemo(() => {
+                const count = data.subProjects.length;
+                return data.subProjects.map((sp, index) => {
+                    const angle = (index / count) * 2 * Math.PI - (Math.PI / 2);
+                    const spX = center.x + radius * Math.cos(angle);
+                    const spY = center.y + radius * Math.sin(angle);
+                    
+                    // Calculate threat positions
+                    const threatOrbitRadius = 90;
+                    const threatNodes = sp.threats.map((t, tIndex) => {
+                        const totalThreats = sp.threats.length;
+                        const spread = Math.PI; // 180 degree spread away from center
+                        const startAngle = angle - (spread / 2);
+                        const step = totalThreats > 1 ? spread / (totalThreats - 1) : 0;
+                        const tAngle = totalThreats === 1 ? angle : startAngle + (tIndex * step);
+
+                        return {
+                            ...t,
+                            x: spX + threatOrbitRadius * Math.cos(tAngle),
+                            y: spY + threatOrbitRadius * Math.sin(tAngle)
+                        };
+                    });
 
                     return {
-                        ...t,
-                        x: spX + threatOrbitRadius * Math.cos(tAngle),
-                        y: spY + threatOrbitRadius * Math.sin(tAngle)
+                        ...sp,
+                        x: spX,
+                        y: spY,
+                        threatNodes
                     };
                 });
+            }, [data.subProjects]);
 
-                return {
-                    ...sp,
-                    x: spX,
-                    y: spY,
-                    threatNodes
-                };
-            });
-        }, [data.subProjects]);
+            const getSeverityColor = (severity) => {
+                switch(severity) {
+                    case 'Critical': return '#ef4444';
+                    case 'High': return '#f97316';
+                    case 'Medium': return '#eab308';
+                    default: return '#22c55e';
+                }
+            };
 
-        const getSeverityColor = (severity) => {
-            switch(severity) {
-                case 'Critical': return '#ef4444'; // Red 500
-                case 'High': return '#f97316'; // Orange 500
-                case 'Medium': return '#eab308'; // Yellow 500
-                default: return '#22c55e'; // Green 500 (Low)
-            }
-        };
-
-        return (
-            <div className="flex w-full h-full font-sans text-slate-800 bg-white overflow-hidden absolute inset-0">
-                
-                {/* LEFT: SVG Visualizer */}
-                <div className="flex-1 relative canvas-bg overflow-hidden flex items-center justify-center">
+            return (
+                <div className="flex w-full h-full font-sans text-slate-800 bg-white overflow-hidden absolute inset-0">
                     
-                    {/* Overlay Header */}
-                    <div className="absolute top-4 left-4 z-20">
-                        <h1 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
-                                <Icon name="shield-alert" size={20} />
-                            </div>
-                            ThreatSphere
-                        </h1>
-                    </div>
-
-                    <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
-                         <button 
-                            onClick={addSubProject}
-                            className="bg-white hover:bg-slate-50 text-indigo-600 border border-indigo-200 px-4 py-2 rounded-full shadow-sm flex items-center gap-2 transition text-sm font-medium"
-                        >
-                            <Icon name="plus" size={16} /> Add Project Module
-                        </button>
-                        <div className="text-xs text-slate-400 font-medium px-2">
-                            {data.subProjects.length} Modules • {data.subProjects.reduce((acc, sp) => acc + sp.threats.length, 0)} Threats
-                        </div>
-                    </div>
-                    
-                    <svg 
-                        viewBox="0 0 800 600" 
-                        className="w-full h-full max-w-[1200px] max-h-[900px] select-none"
-                        preserveAspectRatio="xMidYMid meet"
-                    >
-                        <defs>
-                            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-                                <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.1"/>
-                            </filter>
-                        </defs>
-
-                        {/* Root Connection Lines */}
-                        {nodes.map(node => (
-                            <line 
-                                key={`line-root-${node.id}`}
-                                x1={center.x} y1={center.y}
-                                x2={node.x} y2={node.y}
-                                stroke="#cbd5e1"
-                                strokeWidth="2"
-                                strokeDasharray="5,5"
-                            />
-                        ))}
-
-                        {/* Threat Connection Lines */}
-                        {nodes.map(node => (
-                            node.threatNodes.map(tNode => (
-                                <line 
-                                    key={`line-threat-${tNode.id}`}
-                                    x1={node.x} y1={node.y}
-                                    x2={tNode.x} y2={tNode.y}
-                                    stroke="#e2e8f0"
-                                    strokeWidth="1.5"
-                                />
-                            ))
-                        ))}
-
-                        {/* Center Node (Project) */}
-                        <g 
-                            onClick={() => setSelection({ type: 'project', id: 'root' })}
-                            className="cursor-pointer node-transition node-hover"
-                            style={{ transformOrigin: `${center.x}px ${center.y}px` }}
-                        >
-                            <circle 
-                                cx={center.x} cy={center.y} r={55} 
-                                fill={selection.type === 'project' ? "#4f46e5" : "#fff"}
-                                stroke="#4f46e5" strokeWidth="4"
-                                className="transition-colors duration-300 shadow-xl"
-                            />
-                            <foreignObject x={center.x - 45} y={center.y - 45} width="90" height="90">
-                                <div className={`flex items-center justify-center h-full text-center text-xs font-bold p-1 leading-tight ${selection.type === 'project' ? 'text-white' : 'text-slate-700'}`}>
-                                    {data.projectName}
-                                </div>
-                            </foreignObject>
-                        </g>
-
-                        {/* Sub-Project and Threat Nodes */}
-                        {nodes.map(node => {
-                            const isNodeSelected = selection.type !== 'project' && 
-                                             (selection.id === node.id || selection.parentId === node.id);
-                            
-                            return (
-                                <React.Fragment key={node.id}>
-                                    {/* Sub-Project Node */}
-                                    <g 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelection({ type: 'subProject', id: node.id });
-                                        }}
-                                        className="cursor-pointer node-transition node-hover"
-                                        style={{ transformOrigin: `${node.x}px ${node.y}px` }}
-                                    >
-                                        <circle 
-                                            cx={node.x} cy={node.y} r={40} 
-                                            fill={isNodeSelected ? "#ecfdf5" : "white"}
-                                            stroke={isNodeSelected ? "#10b981" : "#cbd5e1"} 
-                                            strokeWidth={isNodeSelected ? 3 : 2}
-                                        />
-                                        <foreignObject x={node.x - 35} y={node.y - 35} width="70" height="70">
-                                            <div className="flex items-center justify-center h-full text-center text-[10px] font-bold text-slate-700 p-1 overflow-hidden pointer-events-none leading-tight">
-                                                {node.name}
-                                            </div>
-                                        </foreignObject>
-                                    </g>
-
-                                    {/* Threat Nodes (Orbiting satellites) */}
-                                    {node.threatNodes.map(tNode => {
-                                        const isThreatSelected = selection.type === 'threat' && selection.id === tNode.id;
-                                        const color = getSeverityColor(tNode.severity);
-                                        
-                                        return (
-                                            <g 
-                                                key={tNode.id}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    setSelection({ type: 'threat', id: tNode.id, parentId: node.id });
-                                                }}
-                                                className="cursor-pointer node-transition node-hover"
-                                                style={{ transformOrigin: `${tNode.x}px ${tNode.y}px` }}
-                                            >
-                                                {/* Selection Glow */}
-                                                {isThreatSelected && (
-                                                    <circle 
-                                                        cx={tNode.x} cy={tNode.y} r={32} 
-                                                        fill="none" 
-                                                        stroke={color} 
-                                                        strokeWidth="2"
-                                                        opacity="0.4"
-                                                    />
-                                                )}
-                                                
-                                                {/* Main Threat Circle */}
-                                                <circle 
-                                                    cx={tNode.x} cy={tNode.y} r={28} 
-                                                    fill={color}
-                                                    stroke="white" 
-                                                    strokeWidth="2"
-                                                    filter="url(#shadow)"
-                                                />
-                                                
-                                                {/* Threat Label inside Circle */}
-                                                <foreignObject x={tNode.x - 24} y={tNode.y - 24} width="48" height="48">
-                                                    <div className="flex items-center justify-center h-full text-center p-0.5">
-                                                        <span className="text-[8px] font-bold text-white line-clamp-3 leading-3 drop-shadow-md">
-                                                            {tNode.title}
-                                                        </span>
-                                                    </div>
-                                                </foreignObject>
-                                            </g>
-                                        );
-                                    })}
-                                </React.Fragment>
-                            );
-                        })}
-                    </svg>
-                </div>
-
-                {/* RIGHT: Sidebar / Inspector */}
-                <div className="w-[480px] bg-white border-l border-slate-200 flex flex-col h-full shadow-2xl z-30">
-                    
-                    {/* Header */}
-                    <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                        <h2 className="font-bold text-slate-700 text-lg flex items-center gap-2">
-                            {selection.type === 'project' && <><Icon name="layout-dashboard" /> Project Overview</>}
-                            {selection.type === 'subProject' && <><Icon name="box" /> Sub-Project</>}
-                            {selection.type === 'threat' && <><Icon name="shield-alert" /> Threat Analysis</>}
-                        </h2>
-                        {selection.type === 'threat' && (
-                            <button 
-                                onClick={() => setSelection({ type: 'subProject', id: activeSubProject.id })}
-                                className="text-xs text-slate-500 hover:text-slate-800 underline"
-                            >
-                                Back to List
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Content Area */}
-                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll">
+                    {/* LEFT: SVG Visualizer */}
+                    <div className="flex-1 relative canvas-bg overflow-hidden flex items-center justify-center">
                         
-                        {/* 1. PROJECT VIEW */}
-                        {selection.type === 'project' && (
-                            <div className="space-y-6 animate-fade-in">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Project Name</label>
-                                    <input 
-                                        type="text" 
-                                        value={data.projectName}
-                                        onChange={(e) => updateProjectName(e.target.value)}
-                                        className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                        {/* Overlay Header */}
+                        <div className="absolute top-4 left-4 z-20">
+                            <h1 className="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white">
+                                    <Icon name="shield-alert" size={20} />
+                                </div>
+                                ThreatSphere
+                            </h1>
+                        </div>
+
+                        <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-2">
+                             <button 
+                                onClick={addSubProject}
+                                className="bg-white hover:bg-slate-50 text-indigo-600 border border-indigo-200 px-4 py-2 rounded-full shadow-sm flex items-center gap-2 transition text-sm font-medium"
+                            >
+                                <Icon name="plus" size={16} /> Add Project Module
+                            </button>
+                            <div className="text-xs text-slate-400 font-medium px-2">
+                                {data.subProjects.length} Modules • {data.subProjects.reduce((acc, sp) => acc + sp.threats.length, 0)} Threats
+                            </div>
+                        </div>
+                        
+                        <svg 
+                            viewBox="0 0 800 600" 
+                            className="w-full h-full max-w-[1200px] max-h-[900px] select-none"
+                            preserveAspectRatio="xMidYMid meet"
+                        >
+                            <defs>
+                                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.1"/>
+                                </filter>
+                            </defs>
+
+                            {/* Root Connection Lines */}
+                            {nodes.map(node => (
+                                <line 
+                                    key={`line-root-${node.id}`}
+                                    x1={center.x} y1={center.y}
+                                    x2={node.x} y2={node.y}
+                                    stroke="#cbd5e1"
+                                    strokeWidth="2"
+                                    strokeDasharray="5,5"
+                                />
+                            ))}
+
+                            {/* Threat Connection Lines */}
+                            {nodes.map(node => (
+                                node.threatNodes.map(tNode => (
+                                    <line 
+                                        key={`line-threat-${tNode.id}`}
+                                        x1={node.x} y1={node.y}
+                                        x2={tNode.x} y2={tNode.y}
+                                        stroke="#e2e8f0"
+                                        strokeWidth="1.5"
                                     />
-                                </div>
+                                ))
+                            ))}
 
-                                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                                    <h3 className="text-sm font-semibold text-slate-700 mb-3">Threat Summary</h3>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {['Critical', 'High', 'Medium', 'Low'].map(sev => {
-                                            const count = data.subProjects.reduce((acc, sp) => 
-                                                acc + sp.threats.filter(t => t.severity === sev).length, 0);
-                                            return (
-                                                <div key={sev} className="bg-white p-2 rounded border border-slate-200 flex justify-between items-center">
-                                                    <span className="text-xs font-medium" style={{ color: getSeverityColor(sev) }}>{sev}</span>
-                                                    <span className="font-bold text-slate-700">{count}</span>
-                                                </div>
-                                            )
-                                        })}
+                            {/* Center Node (Project) */}
+                            <g 
+                                onClick={() => setSelection({ type: 'project', id: 'root' })}
+                                className="cursor-pointer node-transition node-hover"
+                                style={{ transformOrigin: `${center.x}px ${center.y}px` }}
+                            >
+                                <circle 
+                                    cx={center.x} cy={center.y} r={55} 
+                                    fill={selection.type === 'project' ? "#4f46e5" : "#fff"}
+                                    stroke="#4f46e5" strokeWidth="4"
+                                    className="transition-colors duration-300 shadow-xl"
+                                />
+                                <foreignObject x={center.x - 45} y={center.y - 45} width="90" height="90">
+                                    <div className={`flex items-center justify-center h-full text-center text-xs font-bold p-1 leading-tight ${selection.type === 'project' ? 'text-white' : 'text-slate-700'}`}>
+                                        {data.projectName}
                                     </div>
-                                </div>
+                                </foreignObject>
+                            </g>
 
-                                <button 
-                                    onClick={exportJSON}
-                                    className="w-full py-2.5 bg-slate-800 text-white rounded hover:bg-slate-900 flex items-center justify-center gap-2 transition"
-                                >
-                                    <Icon name="download" size={16} /> Export Model JSON
-                                </button>
-                            </div>
-                        )}
-
-                        {/* 2. SUB-PROJECT VIEW */}
-                        {selection.type === 'subProject' && activeSubProject && (
-                            <div className="space-y-6">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Module Name</label>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            value={activeSubProject.name}
-                                            onChange={(e) => updateSubProject(activeSubProject.id, { name: e.target.value })}
-                                            className="flex-1 p-2 border border-slate-300 rounded focus:ring-2 focus:ring-green-500 outline-none"
-                                        />
-                                        <button 
-                                            onClick={() => deleteSubProject(activeSubProject.id)}
-                                            className="p-2 text-rose-500 hover:bg-rose-50 rounded border border-transparent hover:border-rose-200"
-                                            title="Delete Sub-Project"
-                                        >
-                                            <Icon name="trash-2" size={18} />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="border-t border-slate-200 pt-4">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="font-bold text-slate-700">Threats ({activeSubProject.threats.length})</h3>
-                                        <button 
-                                            onClick={() => addThreat(activeSubProject.id)}
-                                            className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-100 font-bold flex items-center gap-1"
-                                        >
-                                            <Icon name="plus" size={12} /> Add Threat
-                                        </button>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        {activeSubProject.threats.length === 0 && (
-                                            <div className="text-center py-8 text-slate-400 bg-slate-50 rounded border border-dashed border-slate-300 text-sm">
-                                                No threats identified yet.
-                                            </div>
-                                        )}
-                                        {activeSubProject.threats.map(threat => (
-                                            <div 
-                                                key={threat.id}
-                                                onClick={() => setSelection({ type: 'threat', id: threat.id, parentId: activeSubProject.id })}
-                                                className="group p-3 bg-white border border-slate-200 rounded hover:border-indigo-400 cursor-pointer shadow-sm hover:shadow transition flex justify-between items-center"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getSeverityColor(threat.severity) }}></div>
-                                                    <div>
-                                                        <div className="font-bold text-sm text-slate-800">{threat.title}</div>
-                                                        <div className="text-[10px] text-slate-500">{threat.category || "Uncategorized"}</div>
-                                                    </div>
-                                                </div>
-                                                <Icon name="chevron-right" size={16} className="text-slate-300 group-hover:text-indigo-500" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 3. THREAT DETAILS VIEW */}
-                        {selection.type === 'threat' && activeThreat && (
-                            <div className="space-y-5 animate-fade-in-right pb-10">
+                            {/* Sub-Project and Threat Nodes */}
+                            {nodes.map(node => {
+                                const isNodeSelected = selection.type !== 'project' && 
+                                                 (selection.id === node.id || selection.parentId === node.id);
                                 
-                                {/* Basics */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Threat Title</label>
-                                    <input 
-                                        type="text" 
-                                        value={activeThreat.title}
-                                        onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { title: e.target.value })}
-                                        className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-lg"
-                                    />
-                                </div>
-
-                                {/* Classification */}
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Severity</label>
-                                        <select 
-                                            value={activeThreat.severity}
-                                            onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { severity: e.target.value })}
-                                            className="w-full p-2 border border-slate-300 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
-                                            style={{ color: getSeverityColor(activeThreat.severity) }}
+                                return (
+                                    <React.Fragment key={node.id}>
+                                        {/* Sub-Project Node */}
+                                        <g 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelection({ type: 'subProject', id: node.id });
+                                            }}
+                                            className="cursor-pointer node-transition node-hover"
+                                            style={{ transformOrigin: `${node.x}px ${node.y}px` }}
                                         >
-                                            <option value="Low">Low (Green)</option>
-                                            <option value="Medium">Medium (Yellow)</option>
-                                            <option value="High">High (Orange)</option>
-                                            <option value="Critical">Critical (Red)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cost</label>
-                                        <div className="relative">
-                                            <Icon name="dollar-sign" size={14} className="absolute left-2.5 top-2.5 text-slate-400" />
-                                            <input 
-                                                type="text" 
-                                                value={activeThreat.cost || ''}
-                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { cost: e.target.value })}
-                                                className="w-full pl-8 p-2 border border-slate-300 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                                placeholder="e.g. High, $5k"
+                                            <circle 
+                                                cx={node.x} cy={node.y} r={40} 
+                                                fill={isNodeSelected ? "#ecfdf5" : "white"}
+                                                stroke={isNodeSelected ? "#10b981" : "#cbd5e1"} 
+                                                strokeWidth={isNodeSelected ? 3 : 2}
                                             />
-                                        </div>
-                                    </div>
-                                </div>
+                                            <foreignObject x={node.x - 35} y={node.y - 35} width="70" height="70">
+                                                <div className="flex items-center justify-center h-full text-center text-[10px] font-bold text-slate-700 p-1 overflow-hidden pointer-events-none leading-tight">
+                                                    {node.name}
+                                                </div>
+                                            </foreignObject>
+                                        </g>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                        {/* Threat Nodes (Orbiting satellites) */}
+                                        {node.threatNodes.map(tNode => {
+                                            const isThreatSelected = selection.type === 'threat' && selection.id === tNode.id;
+                                            const color = getSeverityColor(tNode.severity);
+                                            
+                                            return (
+                                                <g 
+                                                    key={tNode.id}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelection({ type: 'threat', id: tNode.id, parentId: node.id });
+                                                    }}
+                                                    className="cursor-pointer node-transition node-hover"
+                                                    style={{ transformOrigin: `${tNode.x}px ${tNode.y}px` }}
+                                                >
+                                                    {/* Selection Glow */}
+                                                    {isThreatSelected && (
+                                                        <circle 
+                                                            cx={tNode.x} cy={tNode.y} r={32} 
+                                                            fill="none" 
+                                                            stroke={color} 
+                                                            strokeWidth="2"
+                                                            opacity="0.4"
+                                                        />
+                                                    )}
+                                                    
+                                                    {/* Main Threat Circle */}
+                                                    <circle 
+                                                        cx={tNode.x} cy={tNode.y} r={28} 
+                                                        fill={color}
+                                                        stroke="white" 
+                                                        strokeWidth="2"
+                                                        filter="url(#shadow)"
+                                                    />
+                                                    
+                                                    {/* Threat Label inside Circle */}
+                                                    <foreignObject x={tNode.x - 24} y={tNode.y - 24} width="48" height="48">
+                                                        <div className="flex items-center justify-center h-full text-center p-0.5">
+                                                            <span className="text-[8px] font-bold text-white line-clamp-3 leading-3 drop-shadow-md">
+                                                                {tNode.title}
+                                                            </span>
+                                                        </div>
+                                                    </foreignObject>
+                                                </g>
+                                            );
+                                        })}
+                                    </React.Fragment>
+                                );
+                            })}
+                        </svg>
+                    </div>
+
+                    {/* RIGHT: Sidebar / Inspector */}
+                    <div className="w-[480px] bg-white border-l border-slate-200 flex flex-col h-full shadow-2xl z-30">
+                        
+                        {/* Header */}
+                        <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h2 className="font-bold text-slate-700 text-lg flex items-center gap-2">
+                                {selection.type === 'project' && <><Icon name="layout-dashboard" /> Project Overview</>}
+                                {selection.type === 'subProject' && <><Icon name="box" /> Sub-Project</>}
+                                {selection.type === 'threat' && <><Icon name="shield-alert" /> Threat Analysis</>}
+                            </h2>
+                            {selection.type === 'threat' && (
+                                <button 
+                                    onClick={() => setSelection({ type: 'subProject', id: activeSubProject.id })}
+                                    className="text-xs text-slate-500 hover:text-slate-800 underline"
+                                >
+                                    Back to List
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll">
+                            
+                            {/* 1. PROJECT VIEW */}
+                            {selection.type === 'project' && (
+                                <div className="space-y-6 animate-fade-in">
                                     <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Project Name</label>
                                         <input 
                                             type="text" 
-                                            value={activeThreat.category || ''}
-                                            onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { category: e.target.value })}
-                                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                            placeholder="e.g. Injection"
+                                            value={data.projectName}
+                                            onChange={(e) => updateProjectName(e.target.value)}
+                                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Context</label>
-                                        <input 
-                                            type="text" 
-                                            value={activeThreat.context || ''}
-                                            onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { context: e.target.value })}
-                                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                                            placeholder="e.g. Public API"
-                                        />
-                                    </div>
-                                </div>
 
-                                {/* Descriptions */}
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                                            <Icon name="alert-triangle" size={12} /> Risk
-                                        </label>
-                                        <textarea 
-                                            value={activeThreat.risk || ''}
-                                            onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { risk: e.target.value })}
-                                            rows="2"
-                                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
-                                            placeholder="What is the potential impact?"
-                                        ></textarea>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                                            <Icon name="file-text" size={12} /> Description of the Issue
-                                        </label>
-                                        <textarea 
-                                            value={activeThreat.description}
-                                            onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { description: e.target.value })}
-                                            rows="3"
-                                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
-                                            placeholder="Detailed explanation of the vulnerability..."
-                                        ></textarea>
-                                    </div>
-
-                                    <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
-                                        <label className="block text-xs font-bold text-indigo-800 uppercase mb-1 flex items-center gap-1">
-                                            <Icon name="lightbulb" size={12} /> Reasoning for Solution
-                                        </label>
-                                        <textarea 
-                                            value={activeThreat.reasoning || ''}
-                                            onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { reasoning: e.target.value })}
-                                            rows="2"
-                                            className="w-full p-2 border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none bg-white"
-                                            placeholder="Why is this the best approach?"
-                                        ></textarea>
-
-                                        <div className="mt-3">
-                                            <label className="block text-xs font-bold text-indigo-800 uppercase mb-1">Solution & Implementation</label>
-                                            <textarea 
-                                                value={activeThreat.solution}
-                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { solution: e.target.value })}
-                                                rows="4"
-                                                className="w-full p-2 border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none bg-white"
-                                                placeholder="Step-by-step mitigation plan..."
-                                            ></textarea>
+                                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                                        <h3 className="text-sm font-semibold text-slate-700 mb-3">Threat Summary</h3>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {['Critical', 'High', 'Medium', 'Low'].map(sev => {
+                                                const count = data.subProjects.reduce((acc, sp) => 
+                                                    acc + sp.threats.filter(t => t.severity === sev).length, 0);
+                                                return (
+                                                    <div key={sev} className="bg-white p-2 rounded border border-slate-200 flex justify-between items-center">
+                                                        <span className="text-xs font-medium" style={{ color: getSeverityColor(sev) }}>{sev}</span>
+                                                        <span className="font-bold text-slate-700">{count}</span>
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* Sources List Management */}
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
-                                        <Icon name="link" size={12} /> Sources & References
-                                    </label>
-                                    <div className="space-y-2">
-                                        {(activeThreat.sources || []).map((link, idx) => (
-                                            <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded border border-slate-200 group">
-                                                <a 
-                                                    href={link} 
-                                                    target="_blank" 
-                                                    rel="noreferrer" 
-                                                    className="flex-1 text-xs text-blue-600 truncate hover:underline flex items-center gap-1"
-                                                >
-                                                    <Icon name="external-link" size={10} /> {link}
-                                                </a>
-                                                <button 
-                                                    onClick={() => deleteSource(selection.parentId, activeThreat.id, idx)}
-                                                    className="text-slate-400 hover:text-rose-500"
-                                                >
-                                                    <Icon name="trash-2" size={14} />
-                                                </button>
-                                            </div>
-                                        ))}
+                                    <button 
+                                        onClick={exportJSON}
+                                        className="w-full py-2.5 bg-slate-800 text-white rounded hover:bg-slate-900 flex items-center justify-center gap-2 transition"
+                                    >
+                                        <Icon name="download" size={16} /> Export Model JSON
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* 2. SUB-PROJECT VIEW */}
+                            {selection.type === 'subProject' && activeSubProject && (
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Module Name</label>
                                         <div className="flex gap-2">
                                             <input 
                                                 type="text" 
-                                                value={newLinkInput}
-                                                onChange={(e) => setNewLinkInput(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && addSource(selection.parentId, activeThreat.id)}
-                                                className="flex-1 p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-xs"
-                                                placeholder="Paste URL and press Enter or Add"
+                                                value={activeSubProject.name}
+                                                onChange={(e) => updateSubProject(activeSubProject.id, { name: e.target.value })}
+                                                className="flex-1 p-2 border border-slate-300 rounded focus:ring-2 focus:ring-green-500 outline-none"
                                             />
                                             <button 
-                                                onClick={() => addSource(selection.parentId, activeThreat.id)}
-                                                className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded text-xs font-bold"
+                                                onClick={() => deleteSubProject(activeSubProject.id)}
+                                                className="p-2 text-rose-500 hover:bg-rose-50 rounded border border-transparent hover:border-rose-200"
+                                                title="Delete Sub-Project"
                                             >
-                                                Add
+                                                <Icon name="trash-2" size={18} />
                                             </button>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="pt-4 border-t border-slate-200">
-                                    <button 
-                                        onClick={() => deleteThreat(selection.parentId, activeThreat.id)}
-                                        className="w-full py-2 text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition text-sm flex items-center justify-center gap-2 font-medium"
-                                    >
-                                        <Icon name="trash-2" size={14} /> Delete Threat
-                                    </button>
+                                    <div className="border-t border-slate-200 pt-4">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="font-bold text-slate-700">Threats ({activeSubProject.threats.length})</h3>
+                                            <button 
+                                                onClick={() => addThreat(activeSubProject.id)}
+                                                className="text-xs bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded hover:bg-indigo-100 font-bold flex items-center gap-1"
+                                            >
+                                                <Icon name="plus" size={12} /> Add Threat
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            {activeSubProject.threats.length === 0 && (
+                                                <div className="text-center py-8 text-slate-400 bg-slate-50 rounded border border-dashed border-slate-300 text-sm">
+                                                    No threats identified yet.
+                                                </div>
+                                            )}
+                                            {activeSubProject.threats.map(threat => (
+                                                <div 
+                                                    key={threat.id}
+                                                    onClick={() => setSelection({ type: 'threat', id: threat.id, parentId: activeSubProject.id })}
+                                                    className="group p-3 bg-white border border-slate-200 rounded hover:border-indigo-400 cursor-pointer shadow-sm hover:shadow transition flex justify-between items-center"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getSeverityColor(threat.severity) }}></div>
+                                                        <div>
+                                                            <div className="font-bold text-sm text-slate-800">{threat.title}</div>
+                                                            <div className="text-[10px] text-slate-500">{threat.category || "Uncategorized"}</div>
+                                                        </div>
+                                                    </div>
+                                                    <Icon name="chevron-right" size={16} className="text-slate-300 group-hover:text-indigo-500" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        
-                        {!selection.type && (
-                            <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                                <Icon name="mouse-pointer-2" size={48} className="mb-4 opacity-50" />
-                                <p>Select an element to edit</p>
-                            </div>
-                        )}
+                            )}
 
+                            {/* 3. THREAT DETAILS VIEW */}
+                            {selection.type === 'threat' && activeThreat && (
+                                <div className="space-y-5 animate-fade-in-right pb-10">
+                                    
+                                    {/* Basics */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Threat Title</label>
+                                        <input 
+                                            type="text" 
+                                            value={activeThreat.title}
+                                            onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { title: e.target.value })}
+                                            className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none font-bold text-lg"
+                                        />
+                                    </div>
+
+                                    {/* Classification */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Severity</label>
+                                            <select 
+                                                value={activeThreat.severity}
+                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { severity: e.target.value })}
+                                                className="w-full p-2 border border-slate-300 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium"
+                                                style={{ color: getSeverityColor(activeThreat.severity) }}
+                                            >
+                                                <option value="Low">Low (Green)</option>
+                                                <option value="Medium">Medium (Yellow)</option>
+                                                <option value="High">High (Orange)</option>
+                                                <option value="Critical">Critical (Red)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Cost</label>
+                                            <div className="relative">
+                                                <span className="absolute left-2.5 top-2.5 text-slate-400"><Icon name="dollar-sign" size={14} /></span>
+                                                <input 
+                                                    type="text" 
+                                                    value={activeThreat.cost || ''}
+                                                    onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { cost: e.target.value })}
+                                                    className="w-full pl-8 p-2 border border-slate-300 rounded bg-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                    placeholder="e.g. High, $5k"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
+                                            <input 
+                                                type="text" 
+                                                value={activeThreat.category || ''}
+                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { category: e.target.value })}
+                                                className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                placeholder="e.g. Injection"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Context</label>
+                                            <input 
+                                                type="text" 
+                                                value={activeThreat.context || ''}
+                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { context: e.target.value })}
+                                                className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                                placeholder="e.g. Public API"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Descriptions */}
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                                                <Icon name="alert-triangle" size={12} /> Risk
+                                            </label>
+                                            <textarea 
+                                                value={activeThreat.risk || ''}
+                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { risk: e.target.value })}
+                                                rows="2"
+                                                className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
+                                                placeholder="What is the potential impact?"
+                                            ></textarea>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                                                <Icon name="file-text" size={12} /> Description of the Issue
+                                            </label>
+                                            <textarea 
+                                                value={activeThreat.description}
+                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { description: e.target.value })}
+                                                rows="3"
+                                                className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none"
+                                                placeholder="Detailed explanation of the vulnerability..."
+                                            ></textarea>
+                                        </div>
+
+                                        <div className="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                                            <label className="block text-xs font-bold text-indigo-800 uppercase mb-1 flex items-center gap-1">
+                                                <Icon name="lightbulb" size={12} /> Reasoning for Solution
+                                            </label>
+                                            <textarea 
+                                                value={activeThreat.reasoning || ''}
+                                                onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { reasoning: e.target.value })}
+                                                rows="2"
+                                                className="w-full p-2 border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none bg-white"
+                                                placeholder="Why is this the best approach?"
+                                            ></textarea>
+
+                                            <div className="mt-3">
+                                                <label className="block text-xs font-bold text-indigo-800 uppercase mb-1">Solution & Implementation</label>
+                                                <textarea 
+                                                    value={activeThreat.solution}
+                                                    onChange={(e) => updateThreat(selection.parentId, activeThreat.id, { solution: e.target.value })}
+                                                    rows="4"
+                                                    className="w-full p-2 border border-indigo-200 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-none bg-white"
+                                                    placeholder="Step-by-step mitigation plan..."
+                                                ></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Sources List Management */}
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-1">
+                                            <Icon name="link" size={12} /> Sources & References
+                                        </label>
+                                        <div className="space-y-2">
+                                            {(activeThreat.sources || []).map((link, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded border border-slate-200 group">
+                                                    <a 
+                                                        href={link} 
+                                                        target="_blank" 
+                                                        rel="noreferrer" 
+                                                        className="flex-1 text-xs text-blue-600 truncate hover:underline flex items-center gap-1"
+                                                    >
+                                                        <Icon name="external-link" size={10} /> {link}
+                                                    </a>
+                                                    <button 
+                                                        onClick={() => deleteSource(selection.parentId, activeThreat.id, idx)}
+                                                        className="text-slate-400 hover:text-rose-500"
+                                                    >
+                                                        <Icon name="trash-2" size={14} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="text" 
+                                                    value={newLinkInput}
+                                                    onChange={(e) => setNewLinkInput(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && addSource(selection.parentId, activeThreat.id)}
+                                                    className="flex-1 p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none text-xs"
+                                                    placeholder="Paste URL and press Enter or Add"
+                                                />
+                                                <button 
+                                                    onClick={() => addSource(selection.parentId, activeThreat.id)}
+                                                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 rounded text-xs font-bold"
+                                                >
+                                                    Add
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-4 border-t border-slate-200">
+                                        <button 
+                                            onClick={() => deleteThreat(selection.parentId, activeThreat.id)}
+                                            className="w-full py-2 text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded transition text-sm flex items-center justify-center gap-2 font-medium"
+                                        >
+                                            <Icon name="trash-2" size={14} /> Delete Threat
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {!selection.type && (
+                                <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                                    <Icon name="mouse-pointer-2" size={48} className="mb-4 opacity-50" />
+                                    <p>Select an element to edit</p>
+                                </div>
+                            )}
+
+                        </div>
                     </div>
                 </div>
-            </div>
-        );
-    }
+            );
+        }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
-
-</script>
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
 </body>
 </html>
